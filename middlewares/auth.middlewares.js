@@ -25,7 +25,7 @@ exports.validateSession = catchAsync(async (req, res, next) => {
     
   //console.log( token )
   if (!token) {
-    return next(new AppError(401, "The token wasn't delivery, please add it" ));// : "There isn't any delivered header, please verify it"
+    return next(new AppError(401, "The token wasn't delivered, please add it" ));// : "There isn't any delivered header, please verify it"
   }
 
   // Verify that token is still valid

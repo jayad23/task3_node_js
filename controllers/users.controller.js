@@ -30,14 +30,17 @@ res.status(201).json({
 }) 
 
 exports.createUser = catchAsync(async (req, res, next) => {
-  const { userName, email, password } = req.body;
-
+  const { userName, email, address, phone, password } = req.body;
   if 
   ( !userName ||
     !email ||
+    !address ||
+    !phone||
     !password &&
     userName.length === 0 ||
     email.length === 0 ||
+    address.length === 0 ||
+    phone.length === 0 ||
     password.length === 0)
 {
   return next(new AppError(404, 'verify the properties names and their content'));
@@ -47,6 +50,8 @@ exports.createUser = catchAsync(async (req, res, next) => {
   const user = await User.create({
     userName: userName,
     email: email,
+    address: address,
+    phone: phone,
     password: passwordHash
   });
 

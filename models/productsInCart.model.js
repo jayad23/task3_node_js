@@ -21,7 +21,7 @@ const ProductsInCart = sequelize.define('productsincart', {
     allowNull: false
   },
   status: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(10),
     allowNull: false,
     defaultValue: 'active'
   }
