@@ -25,7 +25,7 @@ exports.validateSession = catchAsync(async (req, res, next) => {
     
   //console.log( token )
   if (!token) {
-    return next(new AppError(401, "The token wasn't delivered, please add it" ));// : "There isn't any delivered header, please verify it"
+    return next(new AppError(401, "The token wasn't delivery, please add it" ));// : "There isn't any delivered header, please verify it"
   }
 
   // Verify that token is still valid
@@ -42,7 +42,7 @@ exports.validateSession = catchAsync(async (req, res, next) => {
   });
 
   if (!user) {
-    return next(new AppError(401, 'Invalid session'));
+   return next(new AppError(401, 'User not found'));
   }
 
   //req.anyName = anyValue
@@ -52,10 +52,25 @@ exports.validateSession = catchAsync(async (req, res, next) => {
   next();
 });
 
+//----------------------------------------------------------------------------
+
 exports.userAdmin = catchAsync(async (req, res, next) => {
   if (req.currentUser.role !== 'admin') {
     return next(new AppError(403, 'Access denied'));
   }
  
+  next();
+});
+
+//----------------------------------------------------------------------------
+
+exports.protectAccountOwner = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const { currentUser } = req;
+
+  if (currentUser.id !== +id) {
+    return next(new AppError(403, `You can't update/delete other users accounts`));
+  }
+
   next();
 });

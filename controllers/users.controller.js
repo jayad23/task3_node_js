@@ -3,71 +3,55 @@ const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 
 const { User } = require('../models/users.model');
+const { Order } = require('../models/orders.model');
+const { Product } = require('../models/products.model');
+
 const { AppError } = require('../utils/appError');
 const { catchAsync } = require('../utils/catchAsync');
-const { Cart } = require('../models/carts.model');
+const { filterObj } = require('../utils/filterObj');
 
 dotenv.config({ path: './config.env' });
 
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   const users = await User.findAll({
-  where: { status: 'active' }
+    attributes: { exclude: ['password'] },
+    where: { status: 'active' }
+
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      users
+    }
+  });
 });
 
-if (users.length === 0) {
-  res.status(200).json({
-    status: 'success',
-    message: 'there are not users created until.'
-  });
-  return;
-}
-res.status(201).json({
-  status: 'success',
-  data: {
-    users
-  }
-});  
-}) 
-
 exports.createUser = catchAsync(async (req, res, next) => {
-  const { userName, email, address, phone, password } = req.body;
-  if 
-  ( !userName ||
-    !email ||
-    !address ||
-    !phone||
-    !password &&
-    userName.length === 0 ||
-    email.length === 0 ||
-    address.length === 0 ||
-    phone.length === 0 ||
-    password.length === 0)
-{
-  return next(new AppError(404, 'verify the properties names and their content'));
-}
+  const { userName, email, password } = req.body;
 
+  // const salt = await bcrypt.genSalt(12);
   let passwordHash = await bcryptjs.hash(password, 8);
   const user = await User.create({
     userName: userName,
     email: email,
-    address: address,
-    phone: phone,
     password: passwordHash
   });
 
   user.password = undefined;
+
   res.status(201).json({
     status: 'success',
     data: {
       user
     }
-  }); 
-}) 
+  });
+});
 
 exports.loginUser = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   const user = await User.findOne({
-    where: {email: email, status: 'active' }
+    where: { email: email, status: 'active' }
   });
 
   // Compare entered password vs hashed password
@@ -88,14 +72,78 @@ exports.loginUser = catchAsync(async (req, res, next) => {
     status: 'success',
     data: { token }
   });
-})
+});
 
-//exports.getAllUsersProducts = catchAsync(async (req, res, next) => {
-//  const { id } = req.params
+exports.getAllUsersProducts = catchAsync(async (req, res, next) => {
+  const { currentUser } = req;
+  // console.log(currentUser.id);
+  // const { id  } =req.params;
 
-//  const allproducts = await Cart.findAll({
-//    where: {id: id, status: active}
-//  }) 
+  const allproducts = await Product.findAll({
+    where: { userId: currentUser.id, status: 'active' }
+  });
 
-//}
-//)
+  res.status(201).json({
+    status: 'success',
+    data: { allproducts }
+  });
+});
+
+exports.getUserById = catchAsync(async (req, res, next) => {
+  const { currentUser } = req;
+
+  res.status(200).json({ status: 'success', data: { currentUser } });
+});
+
+exports.updateUser = catchAsync(async (req, res, next) => {
+  const { user } = req;
+
+  const data = filterObj(req.body, 'userName', 'email');
+
+  await user.update({ ...data });
+
+  res.status(201).json({
+    status: 'success',
+    message: `The user with id ${user.id} was update correctly`
+  });
+});
+
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  const { user } = req;
+
+  await user.update({ status: 'deleted' });
+
+  res
+    .status(201)
+    .json({
+      status: 'success',
+      message: `The user with id ${user.id} was deleted correctly`
+    });
+});
+
+exports.getAllUsersOrder = catchAsync(async (req, res, nexr) => {
+  const allOrders = await Order.findAll({
+    where: { status: 'active' } // at the momment implement is needed change the status to purchased
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      allOrders
+    }
+  });
+});
+
+exports.getAllUsersOrderbyId = catchAsync(async (req, res, nexr) => {
+  const { currentUser } = req;
+  const orders = await Order.findAll({
+    where: { id: currentUser.id, status: 'active' } // at the momment implement is needed change the status to purchased
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      orders
+    }
+  });
+});
